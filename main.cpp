@@ -1,36 +1,43 @@
 #include <iostream>
-
+#include <map>
+#include <functional>
 class Test {
  public:
-  Test() : m_data(0) {}
-  Test(const Test&& rhs) {
-    std::cout << "Right side value Copy Construct" << std::endl;
-    std::cout << "m_data : " << rhs.getData() << " " <<  rhs.m_data << std::endl;
-    std::cout << "address : " << &rhs << " / " << &(rhs.m_data) << std::endl;
-
-    m_data = rhs.getData();
+  Test() : m_data(0) {
+    registEvent();
   }
   ~Test() = default;
 
-  void setData(int data) { m_data = data; }
-  int getData() const { return m_data; }
+  void selectEvent(const std::string& b) {
+    m_eventMap[b](*this, b, "get");
+  }
 
  private:
+  void registEvent() {
+    m_eventMap = {
+      {"1", &Test::event1},
+      {"2", &Test::event2}
+    };
+  }
+
+  void event1(const std::string& a, const std::string& b) {
+    std::cout << "event1 : " <<  a << " / " << b << std::endl;
+  }
+
+  void event2(const std::string& a, const std::string& b) {
+    std::cout << "event2 : " <<  a << " / " << b << std::endl;
+  }
+
+ private:
+  std::map<std::string, std::function<void(Test&, const std::string&, const std::string&)>> m_eventMap;
   int m_data;
 };
 
-const Test&& setTest(int data) {
-  Test test1;
-  test1.setData(data);
-  std::cout << "m_data : " << test1.getData() << std::endl;
-  std::cout << "address : " << &test1 << std::endl;
-
-  return std::move(test1);
-}
 
 int main() {
   std::cout << "Hello World!" << std::endl;
-  Test test = setTest(10);
+  Test test;
 
-  std::cout << test.getData() << std::endl;
+  test.selectEvent("1");
+  test.selectEvent("2");
 }
