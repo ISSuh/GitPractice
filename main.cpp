@@ -35,7 +35,7 @@ class Test {
 
 
 int main() {
-  std::cout << "Hello World! 1" << std::endl;
+  std::cout << "Hello World!" << std::endl;
   Test test;
 
   test.selectEvent("1");
