@@ -1,43 +1,48 @@
 #include <iostream>
 #include <map>
 #include <functional>
-class Test {
+#include <tuple>
+
+void HelloWorld() {
+  std::cout << "HelloWorld" << std::endl;
+}
+
+void printArg(const std::string& arg) {
+  std::cout << arg << std::endl;
+}
+
+int sum(int a, int b) {
+  return a + b;
+}
+
+class FunctionMap {
  public:
-  Test() : m_data(0) {
-    registEvent();
-  }
-  ~Test() = default;
+  FunctionMap() = default;
+  ~FunctionMap() = default;
 
-  void selectEvent(const std::string& b) {
-    m_eventMap[b](*this, b, "get");
-  }
-
- private:
-  void registEvent() {
-    m_eventMap = {
-      {"1", &Test::event1},
-      {"2", &Test::event2}
-    };
+  template<typename F>
+  void registFunction(const std::string& name, F func) {
+    m_functionMap.insert(
+        td::make_pair(
+          name, func));
   }
 
-  void event1(const std::string& a, const std::string& b) {
-    std::cout << "event1 : " <<  a << " / " << b << std::endl;
-  }
-
-  void event2(const std::string& a, const std::string& b) {
-    std::cout << "event2 : " <<  a << " / " << b << std::endl;
-  }
+  void callFunction(const std::string& name) {}
 
  private:
-  std::map<std::string, std::function<void(Test&, const std::string&, const std::string&)>> m_eventMap;
-  int m_data;
+  std::map<std::string, std::function<()>> m_functionMap;
 };
 
-
 int main() {
-  std::cout << "Hello World!" << std::endl;
-  Test test;
+  FunctionMap funcMap;
 
-  test.selectEvent("1");
-  test.selectEvent("2");
+  funcMap.registFunction("HelloWorld", HelloWorld);
+  funcMap.registFunction("printArg", printArg);
+  funcMap.registFunction("sum", sum);
+
+  funcMap["HelloWorld"]();
+  funcMap["printArg"]("Hello!!");
+  funcMap["sum"](1, 3);
+
+  return 0;
 }
