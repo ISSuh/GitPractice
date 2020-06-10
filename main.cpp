@@ -27,10 +27,10 @@ class FunctionMap {
     //       name, func));
   }
 
-  void callFunction(const std::string& name) {}
+  void callFunction(const std::string& name) {} 
 
-//  private:
-  // std::map<std::string, std::function<()>> m_functionMap;
+ private:
+  std::map<std::string, std::function<()>> m_functionMap;
 };
 
 namespace helper {
