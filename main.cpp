@@ -42,13 +42,16 @@ namespace helper {
 
     template <int... Is>
     struct gen_seq<0, Is...> : index<Is...> {};
+
+    template <class... Args>
+    struct type_list {
+      template <std::size_t N>
+      using type = typename std::tuple_element<N, std::tuple<Args...>>::type;
+    };
 }
 
-template <typename R, typename... Ts>
+template < typename... Ts>
 class Action {
- private:
-  std::function<R(Ts...)> f;
-  std::tuple<Ts...> args;
  public:
     template <typename F, typename... Args>
     Action(F&& func, Args&&... args) : f(std::forward<F>(func)),
@@ -68,7 +71,13 @@ class Action {
         func(args);
     }
 
-    int argCount() const { args.size(); }
+    int argCount() const {
+      std::cout << std::tuple_size<std::tuple<Ts...>>::value << std::endl;
+    }
+
+ private:
+  std::function<void(Ts...)> f;
+  std::tuple<Ts...> args;
 };
 
 template <typename F, typename... Args>
@@ -88,7 +97,11 @@ int main() {
   // funcMap["sum"](1, 3);
 
     auto add = make_action([](int a, int b, float c){ std::cout << a + b + c; }, 2, 2, 3.5);
+    add.argCount();
+    add.argType();
     auto sub = make_action([](int a, int b){ std::cout << a - b; }, 2, 2);
+    sub.argCount();
+    sub.argType();
 
     add.act();
     sub.act();
