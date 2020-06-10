@@ -27,9 +27,9 @@ class FunctionMap {
           name, func));
   }
 
-  void callFunction(const std::string& name) {}
+  void callFunction(const std::string& name) {} 
 
- private:
+ private: 
   std::map<std::string, std::function<()>> m_functionMap;
 };
 
