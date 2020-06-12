@@ -24,20 +24,12 @@ namespace helper {
 
     template <int... Is>
     struct gen_seq<0, Is...> : index<Is...> {};
-
-    template <class... Args>
-    struct type_list {
-      template <std::size_t N>
-      using type = typename std::tuple_element<N, std::tuple<Args...>>::type;
-    };
 }
 
-template < typename... Ts>
 class Action {
  public:
-    template <typename F, typename... Args>
-    Action(F&& func, Args&&... args) : f(std::forward<F>(func)),
-                                       args(std::forward<Args>(args)...) {}
+    template <typename F>
+    explicit Action(F&& func) : f(std::forward<F>(func)) {}
 
     template <typename... Args, int... Is>
     void func(std::tuple<Args...>& tup, helper::index<Is...>) {
@@ -45,21 +37,22 @@ class Action {
     }
 
     template <typename... Args>
-    void func(std::tuple<Args...>& tup) {
+    void func(const std::tuple<Args...>& tup) {
         func(tup, helper::gen_seq<sizeof...(Args)>{});
     }
 
-    void act() {
-        func(args);
-    }
+    template<typename... Args>
+    void act(Args&&... args) {
+        std::tuple<Args...> params(std::forward<Args>(args)...);
 
-    int argCount() const {
-      std::cout << std::tuple_size<std::tuple<Ts...>>::value << std::endl;
+        func(params);
     }
-
- private:
-  std::tuple<Ts...> args;
 };
+
+template <typename F>
+Action make_action(F&& f) {
+    return Action (std::forward<F>(f));
+}
 
 class Route {
  public:
@@ -71,35 +64,39 @@ class Route {
     registFunction(name, std::forward<F>(f));
   }
 
- private:
-  template<typename F, >
-  void registFunction(const std::string& name, F&& f) {
-    m_funcMap[name] = {f}
+  template<typename ...Args>
+  void call(const std::string& name, Args&& ...args) {
+    m_funcMap[name](std::forward<Args>(args));
   }
 
-  template<typename F, typename ...Args>
-  void caller(F&& f, Args&& ...args) {
-    f(std::forward<f>(f)(std::forward<Args>(args)));
+ private:
+  template<typename F>
+  struct invoker {
+    template<typename... Args>
+    void caller(F f, Args&& ...args) {
+      f(std::forward<f>(f)(std::forward<Args>(args)));
+    }
+  };
+
+ private:
+  template<typename F>
+  void registFunction(const std::string& name, F&& f) {
+    m_funcMap[name] = {  }
   }
 
  private:
   std::map<std::string, std::function<void()>> m_funcMap;
-}
-
-template <typename F, typename... Args>
-Action<Args...> make_action(F&& f, Args&&... args) {
-    return Action<Args...>(std::forward<F>(f), std::forward<Args>(args)...);
-}
+};
 
 int main() {
-  auto add = make_action([](int a, int b, float c){ std::cout << a + b + c; }, 2, 2, 3.5);
-  add.argCount();
-  
-  auto sub = make_action([](int a, int b){ std::cout << a - b; }, 2, 2);
-  sub.argCount();
+  Route r;
+  r.bindFunction("HelloWorld", HelloWorld);
+  r.bindFunction("printArg", printArg);
+  r.bindFunction("sum", sum);
 
-  add.act();
-  sub.act();
+  r.call("HelloWorld");
+  r.call("printArg", "TEST");
+  r.call("sum", 1, 1);
 
   return 0;
 }

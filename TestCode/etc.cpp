@@ -30,22 +30,22 @@ namespace helper {
       template <std::size_t N>
       using type = typename std::tuple_element<N, std::tuple<Args...>>::type;
     };
-}
+}  // namespace helper
 
 template < typename... Ts>
 class Action {
  public:
     template <typename F, typename... Args>
-    Action(F&& func, Args&&... args) : f(std::forward<F>(func)),
+    explicit Action(F&& func, Args&&... args) : f(std::forward<F>(func)),
                                        args(std::forward<Args>(args)...) {}
 
     template <typename... Args, int... Is>
-    void func(std::tuple<Args...>& tup, helper::index<Is...>) {
+    void func(const std::tuple<Args...>& tup, helper::index<Is...>) {
         f(std::get<Is>(tup)...);
     }
 
     template <typename... Args>
-    void func(std::tuple<Args...>& tup) {
+    void func(const std::tuple<Args...>& tup) {
         func(tup, helper::gen_seq<sizeof...(Args)>{});
     }
 
@@ -59,32 +59,8 @@ class Action {
 
  private:
   std::tuple<Ts...> args;
+  std::function<void(Ts...)> f;
 };
-
-class Route {
- public:
-  Route();
-  ~Route();
-
-  template<typename F>
-  void bindFunction(const std::string& name, F&& f) {
-    registFunction(name, std::forward<F>(f));
-  }
-
- private:
-  template<typename F, >
-  void registFunction(const std::string& name, F&& f) {
-    m_funcMap[name] = {f}
-  }
-
-  template<typename F, typename ...Args>
-  void caller(F&& f, Args&& ...args) {
-    f(std::forward<f>(f)(std::forward<Args>(args)));
-  }
-
- private:
-  std::map<std::string, std::function<void()>> m_funcMap;
-}
 
 template <typename F, typename... Args>
 Action<Args...> make_action(F&& f, Args&&... args) {
@@ -94,7 +70,7 @@ Action<Args...> make_action(F&& f, Args&&... args) {
 int main() {
   auto add = make_action([](int a, int b, float c){ std::cout << a + b + c; }, 2, 2, 3.5);
   add.argCount();
-  
+
   auto sub = make_action([](int a, int b){ std::cout << a - b; }, 2, 2);
   sub.argCount();
 
