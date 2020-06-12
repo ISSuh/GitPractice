@@ -15,24 +15,6 @@ int sum(int a, int b) {
   return a + b;
 }
 
-class FunctionMap {
- public:
-  FunctionMap() = default;
-  ~FunctionMap() = default;
-
-  template<typename F>
-  void registFunction(const std::string& name, F func) {
-    // m_functionMap.insert(
-    //     td::make_pair(
-    //       name, func));
-  }
-
-  void callFunction(const std::string& name) {} 
-
- private:
-  std::map<std::string, std::function<()>> m_functionMap;
-};
-
 namespace helper {
     template <int... Is>
     struct index {};
@@ -76,9 +58,33 @@ class Action {
     }
 
  private:
-  std::function<void(Ts...)> f;
   std::tuple<Ts...> args;
 };
+
+class Route {
+ public:
+  Route();
+  ~Route();
+
+  template<typename F>
+  void bindFunction(const std::string& name, F&& f) {
+    registFunction(name, std::forward<F>(f));
+  }
+
+ private:
+  template<typename F, >
+  void registFunction(const std::string& name, F&& f) {
+    m_funcMap[name] = {f}
+  }
+
+  template<typename F, typename ...Args>
+  void caller(F&& f, Args&& ...args) {
+    f(std::forward<f>(f)(std::forward<Args>(args)));
+  }
+
+ private:
+  std::map<std::string, std::function<void()>> m_funcMap;
+}
 
 template <typename F, typename... Args>
 Action<Args...> make_action(F&& f, Args&&... args) {
@@ -86,24 +92,14 @@ Action<Args...> make_action(F&& f, Args&&... args) {
 }
 
 int main() {
-  // FunctionMap funcMap;
+  auto add = make_action([](int a, int b, float c){ std::cout << a + b + c; }, 2, 2, 3.5);
+  add.argCount();
+  
+  auto sub = make_action([](int a, int b){ std::cout << a - b; }, 2, 2);
+  sub.argCount();
 
-  // funcMap.registFunction("HelloWorld", HelloWorld);
-  // funcMap.registFunction("printArg", printArg);
-  // funcMap.registFunction("sum", sum);
+  add.act();
+  sub.act();
 
-  // funcMap["HelloWorld"]();
-  // funcMap["printArg"]("Hello!!");
-  // funcMap["sum"](1, 3);
-
-    auto add = make_action([](int a, int b, float c){ std::cout << a + b + c; }, 2, 2, 3.5);
-    add.argCount();
-    add.argType();
-    auto sub = make_action([](int a, int b){ std::cout << a - b; }, 2, 2);
-    sub.argCount();
-    sub.argType();
-
-    add.act();
-    sub.act();
   return 0;
 }
